@@ -25,26 +25,30 @@ int max_rec_id = 0;
 //---------------------meghvívja az egyes funkciókért felelős függvényeket
 int main(int argc, char **argv)
 {
+    int main_menupont = 10;
     init(argv[1]);
-    printf("\n-.-.-.-.-.-.Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n");
-    int main_menupont = menu(5);
-    switch (main_menupont)
+    while (main_menupont != 0)
     {
-    case 1:
-        uj_szallitmany(argv[1]);
-        break;
-    case 2:
-        listazas(argv[1]);
-        break;
-    case 3:
-        lisazas_szolotermo_videk_szerint(argv[1]);
-        break;
-    case 4:
-        adatmodositas(argv[1]);
-        break;
-    case 5:
-        adattorles(argv[1]);
-        break;
+        printf("\n-.-.-.-.-.-.Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n");
+        main_menupont = menu(5);
+        switch (main_menupont)
+        {
+        case 1:
+            uj_szallitmany(argv[1]);
+            break;
+        case 2:
+            listazas(argv[1]);
+            break;
+        case 3:
+            lisazas_szolotermo_videk_szerint(argv[1]);
+            break;
+        case 4:
+            adatmodositas(argv[1]);
+            break;
+        case 5:
+            adattorles(argv[1]);
+            break;
+        }
     }
 }
 //-----------------uj szallitmany
