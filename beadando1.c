@@ -1,35 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>     //open,creat
-#include <sys/types.h> //open
+#include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
-#include <errno.h> //perror, errno
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-//-----------------fuggveny fejlécek
-int menu(int max_menupont);
-void uj_szallitmany();
+//Függvények
 void init(char *arg);
+void uj_szallitmany();
 void listazas(char *arg);
 void lisazas_szolotermo_videk_szerint(char *arg);
-char ***listazas_soronkent(char *arg);
 void adatmodositas(char *arg);
-int id_lokalizalas(char *arg, int id);
 void adattorles(char *arg);
-void fie_feluliras(char *arg, char *szolotermo_videk, char *nev, char *mennyiseg, char *szolofajta, char *id);
+//Segédfüggvények
+char ***listazas_soronkent(char *arg);
+int id_lokalizalas(char *arg, int id);
+int menu(int max_menupont);
+
 int max_rec_id = 0;
 
-//-----------------main
-//---------------------egy paramétert vár: a file neve
-//---------------------meghvívja az egyes funkciókért felelős függvényeket
+//main
+//Paraméterek: fájl név
+//Funkció: fő funkciók meghívása
 int main(int argc, char **argv)
 {
     int main_menupont = 10;
     init(argv[1]);
     while (main_menupont != 0)
     {
-        printf("\n-.-.-.-.-.-.Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n");
+        printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
+        printf("Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n");
         main_menupont = menu(5);
         switch (main_menupont)
         {
@@ -51,14 +53,24 @@ int main(int argc, char **argv)
         }
     }
 }
-//-----------------uj szallitmany
-//---------------------adatokat beker
-//---------------------adatokat kiir stdout-ra
-//---------------------adatokat kiir megadott file-ba
+
+void init(char *arg)
+{
+    char dummy1[50] = "Tokaji, Bela, 20, Furmint, 1\n";
+    max_rec_id++;
+    char dummy2[50] = "Egri, Janos, 100, Harslevelu, 2\n";
+    max_rec_id++;
+    int g;
+    g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    write(g, dummy1, strlen(dummy1));
+    write(g, dummy2, strlen(dummy2));
+    close(g);
+}
+
 void uj_szallitmany(char *arg)
 {
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Új szállítmány-.-.-.-.-.-.-.-.-.-\n");
     max_rec_id++;
-    //---------------------adatokat beker
     printf("Szolotermelo videk neve:\n1.Tokaji\n2.Egri\n3.Balatoni\n");
     int szolotermelo_videk = menu(3);
     char szolotermo_videk_str[9];
@@ -89,9 +101,7 @@ void uj_szallitmany(char *arg)
     scanf("%s", szolofajta);
     while (fgetc(stdin) != '\n')
         ;
-    //---------------------adatokat kiir stdout-ra
     printf("-----------------\nMegadott adatok:\n-Szolotermelo videk: %s\n-Termelo neve: %s\n-Atvett mennyiseg: %d\n-Szolofajta: %s\n-----------------\n", szolotermo_videk_str, nev, mennyiseg, szolofajta);
-    //---------------------adatokat kiir megadott file-ba
     printf("File-ba iras\n");
     int g;
     char mennyiseg_str[4];
@@ -112,10 +122,10 @@ void uj_szallitmany(char *arg)
     close(g);
 }
 
-//-----------------listazas
-//---------------------file teljes tartalmat listazza
+
 void listazas(char *arg)
 {
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Listázás-.-.-.-.-.-.-.-.-.-\n");
     int g;
     g = open(arg, O_RDONLY);
     char c;
@@ -125,45 +135,9 @@ void listazas(char *arg)
     }
 }
 
-char ***listazas_soronkent(char *arg)
-{
-    int g;
-    g = open(arg, O_RDONLY);
-    char c;
-    int sorok = 0;
-    char ***arr = malloc(sorok * sizeof(char **));
-    char line[100];
-    char *token;
-    strcpy(line, "");
-    while (read(g, &c, sizeof(c)))
-    {
-        if (c != '\n')
-        {
-            strncat(line, &c, sizeof(c));
-        }
-        else
-        {
-            const char delim[2] = ",";
-            token = strtok(line, delim);
-            int szavak = 0;
-            arr = realloc(arr, (sorok + 1) * sizeof(char **));
-            arr[sorok] = malloc(5 * sizeof(char *));
-            while (token != NULL)
-            {
-                arr[sorok][szavak] = strdup(token);
-                token = strtok(NULL, ",");
-                szavak++;
-            }
-            sorok++;
-            strcpy(line, "");
-        }
-    }
-    close(g);
-    return arr;
-}
-
 void lisazas_szolotermo_videk_szerint(char *arg)
 {
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Listázás területenként-.-.-.-.-.-.-.-.-.-\n");
     char ***eredmeny = listazas_soronkent(arg);
     char szolotermo_videk[10];
     int i = 0;
@@ -183,6 +157,7 @@ void lisazas_szolotermo_videk_szerint(char *arg)
 
 void adatmodositas(char *arg)
 {
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Adatmódosítás-.-.-.-.-.-.-.-.-.-\n");
     char ***eredmeny = listazas_soronkent(arg);
     int id;
     int id_loc;
@@ -239,6 +214,7 @@ void adatmodositas(char *arg)
 
 void adattorles(char *arg)
 {
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Törlés-.-.-.-.-.-.-.-.-.-\n");
     char ***eredmeny = listazas_soronkent(arg);
     int id;
     int id_loc;
@@ -272,6 +248,43 @@ void adattorles(char *arg)
     close(g);
 }
 
+char ***listazas_soronkent(char *arg)
+{
+    int g;
+    g = open(arg, O_RDONLY);
+    char c;
+    int sorok = 0;
+    char ***arr = malloc(sorok * sizeof(char **));
+    char line[100];
+    char *token;
+    strcpy(line, "");
+    while (read(g, &c, sizeof(c)))
+    {
+        if (c != '\n')
+        {
+            strncat(line, &c, sizeof(c));
+        }
+        else
+        {
+            const char delim[2] = ",";
+            token = strtok(line, delim);
+            int szavak = 0;
+            arr = realloc(arr, (sorok + 1) * sizeof(char **));
+            arr[sorok] = malloc(5 * sizeof(char *));
+            while (token != NULL)
+            {
+                arr[sorok][szavak] = strdup(token);
+                token = strtok(NULL, ",");
+                szavak++;
+            }
+            sorok++;
+            strcpy(line, "");
+        }
+    }
+    close(g);
+    return arr;
+}
+
 int id_lokalizalas(char *arg, int id)
 {
     char ***eredmeny = listazas_soronkent(arg);
@@ -289,24 +302,6 @@ int id_lokalizalas(char *arg, int id)
     return loc;
 }
 
-//-----------------init
-//---------------------file inicializalasa
-void init(char *arg)
-{
-    char dummy1[50] = "Tokaji, Bela, 20, Furmint, 1\n";
-    max_rec_id++;
-    char dummy2[50] = "Egri, Janos, 100, Harslevelu, 2\n";
-    max_rec_id++;
-    int g;
-    g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    write(g, dummy1, strlen(dummy1));
-    write(g, dummy2, strlen(dummy2));
-    close(g);
-}
-//-----------------menu
-//---------------------a menuvalasztast kezeli
-//---------------------egy parametere van: max menupont
-//---------------------max menupont felett es 0 alatt ujrakeri a menupontot
 int menu(int max_menupont)
 {
     printf("\nVálasztása: ");
