@@ -28,8 +28,8 @@ int main_menupont = 10;
 //Funkció: fő funkciók meghívása
 int main(int argc, char **argv)
 {
-    
-    init(argv[1]);
+    char *filename = "szolo.dat";
+    init(filename);
     while (main_menupont != 0)
     {
         printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
@@ -38,19 +38,19 @@ int main(int argc, char **argv)
         switch (main_menupont)
         {
         case 1:
-            uj_szallitmany(argv[1]);
+            uj_szallitmany(filename);
             break;
         case 2:
-            listazas(argv[1]);
+            listazas(filename);
             break;
         case 3:
-            lisazas_szolotermo_videk_szerint(argv[1]);
+            lisazas_szolotermo_videk_szerint(filename);
             break;
         case 4:
-            adatmodositas(argv[1]);
+            adatmodositas(filename);
             break;
         case 5:
-            adattorles(argv[1]);
+            adattorles(filename);
             break;
         }
     }
