@@ -18,15 +18,17 @@ void adattorles(char *arg);
 char ***listazas_soronkent(char *arg);
 int id_lokalizalas(char *arg, int id);
 int menu(int max_menupont);
-
+//globális változó
 int max_rec_id = 0;
+int rec_count = 0;
+int main_menupont = 10;
 
 //main
 //Paraméterek: fájl név
 //Funkció: fő funkciók meghívása
 int main(int argc, char **argv)
 {
-    int main_menupont = 10;
+    
     init(argv[1]);
     while (main_menupont != 0)
     {
@@ -58,8 +60,10 @@ void init(char *arg)
 {
     char dummy1[50] = "Tokaji, Bela, 20, Furmint, 1\n";
     max_rec_id++;
+    rec_count++;
     char dummy2[50] = "Egri, Janos, 100, Harslevelu, 2\n";
     max_rec_id++;
+    rec_count++;
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     write(g, dummy1, strlen(dummy1));
@@ -71,6 +75,7 @@ void uj_szallitmany(char *arg)
 {
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Új szállítmány-.-.-.-.-.-.-.-.-.-\n");
     max_rec_id++;
+    rec_count++;
     printf("Szolotermelo videk neve:\n1.Tokaji\n2.Egri\n3.Balatoni\n");
     int szolotermelo_videk = menu(3);
     char szolotermo_videk_str[9];
@@ -103,11 +108,12 @@ void uj_szallitmany(char *arg)
         ;
     printf("-----------------\nMegadott adatok:\n-Szolotermelo videk: %s\n-Termelo neve: %s\n-Atvett mennyiseg: %d\n-Szolofajta: %s\n-----------------\n", szolotermo_videk_str, nev, mennyiseg, szolofajta);
     printf("File-ba iras\n");
-    int g;
     char mennyiseg_str[4];
     char max_rec_id_str[6];
     sprintf(mennyiseg_str, "%d", mennyiseg);
     sprintf(max_rec_id_str, "%d", max_rec_id);
+
+    int g;
     g = open(arg, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     write(g, szolotermo_videk_str, strlen(szolotermo_videk_str));
     write(g, ", ", strlen(", "));
@@ -140,18 +146,17 @@ void lisazas_szolotermo_videk_szerint(char *arg)
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Listázás területenként-.-.-.-.-.-.-.-.-.-\n");
     char ***eredmeny = listazas_soronkent(arg);
     char szolotermo_videk[10];
-    int i = 0;
+    int i;
     printf("Kerem adja meg a szolotermo videk nevet: ");
     scanf("%s", szolotermo_videk);
-    while (fgetc(stdin) != '\n')
-        printf("\nSzállítmányok a(z) %s borvidékről:\n", szolotermo_videk);
-    while (eredmeny[i] != NULL)
+    while (fgetc(stdin) != '\n');
+    printf("\nSzállítmányok a(z) %s borvidékről:\n", szolotermo_videk);
+    for(i=0; i<rec_count; i++)
     {
         if (strcmp(eredmeny[i][0], szolotermo_videk) == 0)
         {
             printf("%s, %s, %s, %s, %s\n", eredmeny[i][0], eredmeny[i][1], eredmeny[i][2], eredmeny[i][3], eredmeny[i][4]);
         }
-        i++;
     }
 }
 
@@ -194,20 +199,19 @@ void adatmodositas(char *arg)
 
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    int i = 0;
-    while (eredmeny[i] != NULL)
+    int i;
+    for(i=0; i<rec_count; i++)
     {
-        write(g, eredmeny[i][0], strlen(eredmeny[id_loc][0]));
+        write(g, eredmeny[i][0], strlen(eredmeny[i][0]));
         write(g, ", ", strlen(", "));
-        write(g, eredmeny[i][1], strlen(eredmeny[id_loc][1]));
+        write(g, eredmeny[i][1], strlen(eredmeny[i][1]));
         write(g, ", ", strlen(", "));
-        write(g, eredmeny[i][2], strlen(eredmeny[id_loc][2]));
+        write(g, eredmeny[i][2], strlen(eredmeny[i][2]));
         write(g, ", ", strlen(", "));
-        write(g, eredmeny[i][3], strlen(eredmeny[id_loc][3]));
+        write(g, eredmeny[i][3], strlen(eredmeny[i][3]));
         write(g, ", ", strlen(", "));
-        write(g, eredmeny[i][4], strlen(eredmeny[id_loc][4]));
+        write(g, eredmeny[i][4], strlen(eredmeny[i][4]));
         write(g, "\n", strlen("\n"));
-        i++;
     }
     close(g);
 }
@@ -226,25 +230,25 @@ void adattorles(char *arg)
     printf("\nA törölni kívánt rekord: %s, %s, %s, %s, %s\n", eredmeny[id_loc][0], eredmeny[id_loc][1], eredmeny[id_loc][2], eredmeny[id_loc][3], eredmeny[id_loc][4]);
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    int i = 0;
-    while (eredmeny[i] != NULL)
+    int i;
+    for(i=0; i<rec_count; i++)
     {
         if (atoi(eredmeny[i][4]) != id)
         {
-            write(g, eredmeny[i][0], strlen(eredmeny[id_loc][0]));
+            write(g, eredmeny[i][0], strlen(eredmeny[i][0]));
             write(g, ", ", strlen(", "));
-            write(g, eredmeny[i][1], strlen(eredmeny[id_loc][1]));
+            write(g, eredmeny[i][1], strlen(eredmeny[i][1]));
             write(g, ", ", strlen(", "));
-            write(g, eredmeny[i][2], strlen(eredmeny[id_loc][2]));
+            write(g, eredmeny[i][2], strlen(eredmeny[i][2]));
             write(g, ", ", strlen(", "));
-            write(g, eredmeny[i][3], strlen(eredmeny[id_loc][3]));
+            write(g, eredmeny[i][3], strlen(eredmeny[i][3]));
             write(g, ", ", strlen(", "));
-            write(g, eredmeny[i][4], strlen(eredmeny[id_loc][4]));
+            write(g, eredmeny[i][4], strlen(eredmeny[i][4]));
             write(g, "\n", strlen("\n"));
         }
-        i++;
     }
     printf("Törles sikeres");
+    rec_count--;
     close(g);
 }
 
@@ -288,16 +292,14 @@ char ***listazas_soronkent(char *arg)
 int id_lokalizalas(char *arg, int id)
 {
     char ***eredmeny = listazas_soronkent(arg);
-    int i = 0;
+    int i;
     int loc = -1;
-    while (eredmeny[i] != NULL)
+    for(i=0; i<rec_count; i++)
     {
         if (atoi(eredmeny[i][4]) == id)
         {
             loc = i;
-            printf("atoi(eredmeny[i][4])=%d", id);
         }
-        i++;
     }
     return loc;
 }
