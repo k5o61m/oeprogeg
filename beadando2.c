@@ -28,7 +28,7 @@ int main_menupont = 10;
 int idealis_szolomennyiseg = 90;
 
 void handler(int signumber){
-  printf("Üzenet fogadva\n");
+  printf("Feldolgozó üzenete fogadva\n");
 }
 
 // main
@@ -69,38 +69,61 @@ int main(int argc, char **argv)
 
 void feldolgozo_folyamat(char *arg){ //move at the end of processes
         char ***eredmeny = listazas_soronkent(arg);
-        char mennyiseg[] = {0, 0};
+        struct Szolo{
+            char szolofajta[20];
+            int kg;
+        };
+        struct Szolo harslevelu;
+        strcpy(harslevelu.szolofajta, "Harslevelu");
+        harslevelu.kg=0;
+        struct Szolo furmint;
+        strcpy(furmint.szolofajta, "Furmint");
+        furmint.kg=0;
         int i;
         for (i = 0; i < rec_count; i++)
         {
             if (strcmp(eredmeny[i][3], " Harslevelu") == 0) //strip ide mehetne
             {
-                mennyiseg[0]+=atoi(eredmeny[i][2]);
+                harslevelu.kg+=atoi(eredmeny[i][2]);
             }
             if (strcmp(eredmeny[i][3], " Furmint") == 0)
             {
-                mennyiseg[1]+=atoi(eredmeny[i][2]);
+                furmint.kg+=atoi(eredmeny[i][2]);
             }
         }
         printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
-        printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", mennyiseg[0], mennyiseg[1]);
-        if(mennyiseg[0]>=idealis_szolomennyiseg || mennyiseg[1]>=idealis_szolomennyiseg){
-            signal(SIGTERM,handler);
-            pid_t child;
-            child = fork();
-            if (child > 0)
+        printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", harslevelu.kg, furmint.kg);
+        if(harslevelu.kg>=idealis_szolomennyiseg || furmint.kg>=idealis_szolomennyiseg){
+            signal(SIGTERM,handler); //handler
+            int pipefd[2]; //declaration of pipe
+            pid_t feldolgozo; //declaration of child
+            pipe(pipefd); //initialization of pipe
+            feldolgozo = fork(); //initialization of child
+
+            if (feldolgozo > 0) //parent
             {
                 sleep(1);
-                printf("\nFeldolgozo folyamat: Várakozás a feldolgozóüzemre\n");
+                printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
                 pause();
-                
+                close(pipefd[0]); //parent will write
+                write(pipefd[1], &harslevelu, sizeof(struct Szolo));
+                printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", harslevelu.szolofajta, harslevelu.kg);
+                close(pipefd[1]);
+                pause();
+
             }
             else
             {
                 //Feldolgozó
                 sleep(10);
-                printf("Feldolgozo folyamat: Feldogozás készen áll, jelzés elküldése.\n");
-                kill(getppid(), SIGTERM); 
+                printf("Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.\n");
+                kill(getppid(), SIGTERM);
+                close(pipefd[1]);
+                struct Szolo fogadott_szolo;
+                read(pipefd[0], &fogadott_szolo, sizeof(struct Szolo));
+                printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
+                close(pipefd[0]);
+                kill(getppid(), SIGTERM);
             }
         }
 }
