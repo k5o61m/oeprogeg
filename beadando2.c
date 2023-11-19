@@ -95,9 +95,11 @@ void feldolgozo_folyamat(char *arg){ //move at the end of processes
         printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", harslevelu.kg, furmint.kg);
         if(harslevelu.kg>=idealis_szolomennyiseg || furmint.kg>=idealis_szolomennyiseg){
             signal(SIGTERM,handler); //handler
-            int pipefd[2]; //declaration of pipe
+            int pipe_szolo[2]; //declaration of pipe
+            int pipe_bor[2];
             pid_t feldolgozo; //declaration of child
-            pipe(pipefd); //initialization of pipe
+            pipe(pipe_szolo); //initialization of pipe
+            pipe(pipe_bor);
             feldolgozo = fork(); //initialization of child
 
             if (feldolgozo > 0) //parent
@@ -105,12 +107,18 @@ void feldolgozo_folyamat(char *arg){ //move at the end of processes
                 sleep(1);
                 printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
                 pause();
-                close(pipefd[0]); //parent will write
-                write(pipefd[1], &harslevelu, sizeof(struct Szolo));
+                close(pipe_szolo[0]); //parent will write
+                close(pipe_bor[1]); //parent will read
+                write(pipe_szolo[1], &harslevelu, sizeof(struct Szolo));
                 printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", harslevelu.szolofajta, harslevelu.kg);
-                close(pipefd[1]);
+                close(pipe_szolo[1]);
                 pause();
-
+                float liter;
+                read(pipe_bor[0], &liter, sizeof(float));
+                printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből", liter);
+                close(pipe_bor[0]);
+                sleep(10);
+                kill(feldolgozo, SIGKILL);
             }
             else
             {
@@ -118,12 +126,20 @@ void feldolgozo_folyamat(char *arg){ //move at the end of processes
                 sleep(10);
                 printf("Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.\n");
                 kill(getppid(), SIGTERM);
-                close(pipefd[1]);
+                close(pipe_szolo[1]);
+                close(pipe_bor[0]);
                 struct Szolo fogadott_szolo;
-                read(pipefd[0], &fogadott_szolo, sizeof(struct Szolo));
+                read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
                 printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
-                close(pipefd[0]);
+                close(pipe_szolo[0]);
                 kill(getppid(), SIGTERM);
+                int randomSleep = rand()%6+5;
+                float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
+                float liter = fogadott_szolo.kg*randomLiter;
+                sleep(randomSleep);
+                printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető", randomLiter, liter);
+                write(pipe_bor[1], &liter, sizeof(float));
+                close(pipe_bor[1]);
             }
         }
 }
