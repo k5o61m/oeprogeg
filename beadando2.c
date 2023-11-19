@@ -6,54 +6,103 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
-//Függvények
+// Függvények
 void init(char *arg);
 void uj_szallitmany();
 void listazas(char *arg);
 void lisazas_szolotermo_videk_szerint(char *arg);
 void adatmodositas(char *arg);
 void adattorles(char *arg);
-//Segédfüggvények
+void feldolgozo_folyamat(char *arg);
+// Segédfüggvények
 char ***listazas_soronkent(char *arg);
 int id_lokalizalas(char *arg, int id);
 int menu(int max_menupont);
-//globális változó
+// globális változó
 int max_rec_id = 0;
 int rec_count = 0;
 int main_menupont = 10;
+int idealis_szolomennyiseg = 90;
 
-//main
-//Paraméterek: fájl név
-//Funkció: fő funkciók meghívása
+void handler(int signumber){
+  printf("Üzenet fogadva\n");
+}
+
+// main
+// Paraméterek: fájl név
+// Funkció: fő funkciók meghívása
 int main(int argc, char **argv)
 {
-    char *filename = "szolo.dat";
-    init(filename);
-    while (main_menupont != 0)
-    {
-        printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
-        printf("Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n");
-        main_menupont = menu(5);
-        switch (main_menupont)
+        char *filename = "szolo.dat";
+        init(filename);
+        while (main_menupont != 0)
         {
-        case 1:
-            uj_szallitmany(filename);
-            break;
-        case 2:
-            listazas(filename);
-            break;
-        case 3:
-            lisazas_szolotermo_videk_szerint(filename);
-            break;
-        case 4:
-            adatmodositas(filename);
-            break;
-        case 5:
-            adattorles(filename);
-            break;
+            printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
+            printf("Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n6.feldolgozo folyamat\n");
+            main_menupont = menu(6);
+            switch (main_menupont)
+            {
+            case 1:
+                uj_szallitmany(filename);
+                break;
+            case 2:
+                listazas(filename);
+                break;
+            case 3:
+                lisazas_szolotermo_videk_szerint(filename);
+                break;
+            case 4:
+                adatmodositas(filename);
+                break;
+            case 5:
+                adattorles(filename);
+                break;
+            case 6:
+                feldolgozo_folyamat(filename);
+                break;
+            }
         }
-    }
+}
+
+void feldolgozo_folyamat(char *arg){ //move at the end of processes
+        char ***eredmeny = listazas_soronkent(arg);
+        char mennyiseg[] = {0, 0};
+        int i;
+        for (i = 0; i < rec_count; i++)
+        {
+            if (strcmp(eredmeny[i][3], " Harslevelu") == 0) //strip ide mehetne
+            {
+                mennyiseg[0]+=atoi(eredmeny[i][2]);
+            }
+            if (strcmp(eredmeny[i][3], " Furmint") == 0)
+            {
+                mennyiseg[1]+=atoi(eredmeny[i][2]);
+            }
+        }
+        printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
+        printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", mennyiseg[0], mennyiseg[1]);
+        if(mennyiseg[0]>=idealis_szolomennyiseg || mennyiseg[1]>=idealis_szolomennyiseg){
+            signal(SIGTERM,handler);
+            pid_t child;
+            child = fork();
+            if (child > 0)
+            {
+                sleep(1);
+                printf("\nFeldolgozo folyamat: Várakozás a feldolgozóüzemre\n");
+                pause();
+                
+            }
+            else
+            {
+                //Feldolgozó
+                sleep(10);
+                printf("Feldolgozo folyamat: Feldogozás készen áll, jelzés elküldése.\n");
+                kill(getppid(), SIGTERM); 
+            }
+        }
 }
 
 void init(char *arg)
@@ -101,7 +150,7 @@ void uj_szallitmany(char *arg)
     scanf("%d", &mennyiseg);
     while (fgetc(stdin) != '\n')
         ;
-    printf("Szolofajta: ");
+    printf("Szolofajta neve: :\n1.Furmint\n2.Harslevelu\n");
     char szolofajta[30];
     scanf("%s", szolofajta);
     while (fgetc(stdin) != '\n')
@@ -128,7 +177,6 @@ void uj_szallitmany(char *arg)
     close(g);
 }
 
-
 void listazas(char *arg)
 {
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Listázás-.-.-.-.-.-.-.-.-.-\n");
@@ -149,9 +197,10 @@ void lisazas_szolotermo_videk_szerint(char *arg)
     int i;
     printf("Kerem adja meg a szolotermo videk nevet: ");
     scanf("%s", szolotermo_videk);
-    while (fgetc(stdin) != '\n');
+    while (fgetc(stdin) != '\n')
+        ;
     printf("\nSzállítmányok a(z) %s borvidékről:\n", szolotermo_videk);
-    for(i=0; i<rec_count; i++)
+    for (i = 0; i < rec_count; i++)
     {
         if (strcmp(eredmeny[i][0], szolotermo_videk) == 0)
         {
@@ -200,7 +249,7 @@ void adatmodositas(char *arg)
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     int i;
-    for(i=0; i<rec_count; i++)
+    for (i = 0; i < rec_count; i++)
     {
         write(g, eredmeny[i][0], strlen(eredmeny[i][0]));
         write(g, ", ", strlen(", "));
@@ -231,7 +280,7 @@ void adattorles(char *arg)
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     int i;
-    for(i=0; i<rec_count; i++)
+    for (i = 0; i < rec_count; i++)
     {
         if (atoi(eredmeny[i][4]) != id)
         {
@@ -294,7 +343,7 @@ int id_lokalizalas(char *arg, int id)
     char ***eredmeny = listazas_soronkent(arg);
     int i;
     int loc = -1;
-    for(i=0; i<rec_count; i++)
+    for (i = 0; i < rec_count; i++)
     {
         if (atoi(eredmeny[i][4]) == id)
         {
@@ -305,7 +354,7 @@ int id_lokalizalas(char *arg, int id)
 }
 
 int menu(int max_menupont)
-{
+{ 
     printf("\nVálasztása: ");
     int sucess = 0;
     int menupont;
