@@ -123,15 +123,15 @@ void feldolgozo_folyamat(char *arg)
     }
 
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
-    printf("\n Ha egy szőlőfajtából összegyült %i kg, feldolgozásra elküldjük", idealis_szolomennyiseg);
+    printf("\nHa egy szőlőfajtából összegyült %i kg, feldolgozásra elküldjük", idealis_szolomennyiseg);
     printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i, Muskotaly mennyisege: %i\n", harslevelu.kg, furmint.kg, muskotaly.kg);
     if (size_of_szolo_kuldesre > 0)
     {
         signal(SIGTERM, handler);
-        int pipe_szolo[2];     
+        int pipe_szolo[2];
         int pipe_bor[2];
         pid_t feldolgozo;
-        pipe(pipe_szolo); 
+        pipe(pipe_szolo);
         pipe(pipe_bor);
         feldolgozo = fork();
 
@@ -165,6 +165,7 @@ void feldolgozo_folyamat(char *arg)
             // Feldolgozó
             sleep(10);
             printf("..........|Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.|\n");
+            sleep(3);
             kill(getppid(), SIGTERM);
             close(pipe_szolo[1]);
             close(pipe_bor[0]);
@@ -173,6 +174,7 @@ void feldolgozo_folyamat(char *arg)
                 struct Szolo fogadott_szolo;
                 read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
                 printf("..........|Feldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg|\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
+                sleep(3);
                 kill(getppid(), SIGTERM);
                 int randomSleep = rand() % 6 + 5;
                 float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
@@ -185,7 +187,7 @@ void feldolgozo_folyamat(char *arg)
             }
             close(pipe_szolo[0]);
             close(pipe_bor[1]);
-            kill(getppid(), SIGTERM);
+            // kill(getppid(), SIGTERM);
             exit(0);
         }
     }
