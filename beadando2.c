@@ -29,7 +29,7 @@ int idealis_szolomennyiseg = 90;
 
 void handler(int signumber)
 {
-    printf("Feldolgozó üzenete fogadva\n");
+    printf("~~~~~~~~~~Feldolgozó üzenete fogadva\n");
 }
 
 // main
@@ -138,7 +138,7 @@ void feldolgozo_folyamat(char *arg)
         if (feldolgozo > 0)
         {
             sleep(1);
-            printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
+            printf("----------|Feldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre|\n");
             pause();
             close(pipe_szolo[0]); // parent will write
             close(pipe_bor[1]);   // parent will read
@@ -146,7 +146,7 @@ void feldolgozo_folyamat(char *arg)
             for (int i = 0; i < size_of_szolo_kuldesre; i++)
             {
                 write(pipe_szolo[1], &szolo_kuldesre[i], sizeof(struct Szolo));
-                printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", szolo_kuldesre[i].szolofajta, szolo_kuldesre[i].kg);
+                printf("----------|Feldolgozo folyamat NSZT: %s szolobol elkuldve %i kg|\n", szolo_kuldesre[i].szolofajta, szolo_kuldesre[i].kg);
             }
             close(pipe_szolo[1]);
             for (int i = 0; i < size_of_szolo_kuldesre; i++)
@@ -154,7 +154,7 @@ void feldolgozo_folyamat(char *arg)
                 pause();
                 float liter;
                 read(pipe_bor[0], &liter, sizeof(float));
-                printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből\n", liter);
+                printf("----------|Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből|\n", liter);
             }
             close(pipe_bor[0]);
             int status;
@@ -164,7 +164,7 @@ void feldolgozo_folyamat(char *arg)
         {
             // Feldolgozó
             sleep(10);
-            printf("Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.\n");
+            printf("..........|Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.|\n");
             kill(getppid(), SIGTERM);
             close(pipe_szolo[1]);
             close(pipe_bor[0]);
@@ -172,14 +172,15 @@ void feldolgozo_folyamat(char *arg)
             {
                 struct Szolo fogadott_szolo;
                 read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
-                printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
-
+                printf("..........|Feldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg|\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
                 kill(getppid(), SIGTERM);
                 int randomSleep = rand() % 6 + 5;
                 float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
                 float liter = fogadott_szolo.kg * randomLiter;
                 sleep(randomSleep);
-                printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető\n", randomLiter, liter);
+
+                printf("..........|Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető|\n", randomLiter, liter);
+
                 write(pipe_bor[1], &liter, sizeof(float));
             }
             close(pipe_szolo[0]);
