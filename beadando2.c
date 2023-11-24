@@ -27,8 +27,9 @@ int rec_count = 0;
 int main_menupont = 10;
 int idealis_szolomennyiseg = 90;
 
-void handler(int signumber){
-  printf("Feldolgozó üzenete fogadva\n");
+void handler(int signumber)
+{
+    printf("Feldolgozó üzenete fogadva\n");
 }
 
 // main
@@ -36,112 +37,118 @@ void handler(int signumber){
 // Funkció: fő funkciók meghívása
 int main(int argc, char **argv)
 {
-        char *filename = "szolo.dat";
-        init(filename);
-        while (main_menupont != 0)
+    char *filename = "szolo.dat";
+    init(filename);
+    while (main_menupont != 0)
+    {
+        printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
+        printf("Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n6.feldolgozo folyamat\n");
+        main_menupont = menu(6);
+        switch (main_menupont)
         {
-            printf("\n\n-.-.-.-.-.-.-.-.-.-.-Főmenü-.-.-.-.-.-.-.-.-.-\n");
-            printf("Kerem valasszon a menupontok kozul:\n0.Kilepes\n1.uj szallitmany rogzitese\n2.listazas\n3.listazas-videk szerint\n4.adatmodositas\n5.adat torles\n6.feldolgozo folyamat\n");
-            main_menupont = menu(6);
-            switch (main_menupont)
-            {
-            case 1:
-                uj_szallitmany(filename);
-                break;
-            case 2:
-                listazas(filename);
-                break;
-            case 3:
-                lisazas_szolotermo_videk_szerint(filename);
-                break;
-            case 4:
-                adatmodositas(filename);
-                break;
-            case 5:
-                adattorles(filename);
-                break;
-            case 6:
-                feldolgozo_folyamat(filename);
-                break;
-            }
+        case 1:
+            uj_szallitmany(filename);
+            break;
+        case 2:
+            listazas(filename);
+            break;
+        case 3:
+            lisazas_szolotermo_videk_szerint(filename);
+            break;
+        case 4:
+            adatmodositas(filename);
+            break;
+        case 5:
+            adattorles(filename);
+            break;
+        case 6:
+            feldolgozo_folyamat(filename);
+            break;
         }
+    }
 }
 
-void feldolgozo_folyamat(char *arg){ //move at the end of processes
-        char ***eredmeny = listazas_soronkent(arg);
-        struct Szolo{
-            char szolofajta[20];
-            int kg;
-        };
-        struct Szolo harslevelu;
-        strcpy(harslevelu.szolofajta, "Harslevelu");
-        harslevelu.kg=0;
-        struct Szolo furmint;
-        strcpy(furmint.szolofajta, "Furmint");
-        furmint.kg=0;
-        int i;
-        for (i = 0; i < rec_count; i++)
+void feldolgozo_folyamat(char *arg)
+{ // move at the end of processes
+    char ***eredmeny = listazas_soronkent(arg);
+    struct Szolo
+    {
+        char szolofajta[20];
+        int kg;
+    };
+    struct Szolo harslevelu;
+    strcpy(harslevelu.szolofajta, "Harslevelu");
+    harslevelu.kg = 0;
+    struct Szolo furmint;
+    strcpy(furmint.szolofajta, "Furmint");
+    furmint.kg = 0;
+    int i;
+    for (i = 0; i < rec_count; i++)
+    {
+        if (strcmp(eredmeny[i][3], " Harslevelu") == 0) // strip ide mehetne
         {
-            if (strcmp(eredmeny[i][3], " Harslevelu") == 0) //strip ide mehetne
-            {
-                harslevelu.kg+=atoi(eredmeny[i][2]);
-            }
-            if (strcmp(eredmeny[i][3], " Furmint") == 0)
-            {
-                furmint.kg+=atoi(eredmeny[i][2]);
-            }
+            harslevelu.kg += atoi(eredmeny[i][2]);
         }
-        printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
-        printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", harslevelu.kg, furmint.kg);
-        if(harslevelu.kg>=idealis_szolomennyiseg || furmint.kg>=idealis_szolomennyiseg){
-            signal(SIGTERM,handler); //handler
-            int pipe_szolo[2]; //declaration of pipe
-            int pipe_bor[2];
-            pid_t feldolgozo; //declaration of child
-            pipe(pipe_szolo); //initialization of pipe
-            pipe(pipe_bor);
-            feldolgozo = fork(); //initialization of child
+        if (strcmp(eredmeny[i][3], " Furmint") == 0)
+        {
+            furmint.kg += atoi(eredmeny[i][2]);
+        }
+    }
+    printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
+    printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", harslevelu.kg, furmint.kg);
+    if (harslevelu.kg >= idealis_szolomennyiseg || furmint.kg >= idealis_szolomennyiseg)
+    {                             // PREVENT FORK BOMB
+        signal(SIGTERM, handler); // handler
+        int pipe_szolo[2];        // declaration of pipe
+        int pipe_bor[2];
+        pid_t feldolgozo; // declaration of child
+        pipe(pipe_szolo); // initialization of pipe
+        pipe(pipe_bor);
+        feldolgozo = fork(); // initialization of child
 
-            if (feldolgozo > 0) //parent
-            {
-                sleep(1);
-                printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
-                pause();
-                close(pipe_szolo[0]); //parent will write
-                close(pipe_bor[1]); //parent will read
-                write(pipe_szolo[1], &harslevelu, sizeof(struct Szolo));
-                printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", harslevelu.szolofajta, harslevelu.kg);
-                close(pipe_szolo[1]);
-                pause();
-                float liter;
-                read(pipe_bor[0], &liter, sizeof(float));
-                printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből", liter);
-                close(pipe_bor[0]);
-                sleep(10);
-                kill(feldolgozo, SIGKILL);
-            }
-            else
-            {
-                //Feldolgozó
-                sleep(10);
-                printf("Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.\n");
-                kill(getppid(), SIGTERM);
-                close(pipe_szolo[1]);
-                close(pipe_bor[0]);
-                struct Szolo fogadott_szolo;
-                read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
-                printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
-                close(pipe_szolo[0]);
-                kill(getppid(), SIGTERM);
-                int randomSleep = rand()%6+5;
-                float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
-                float liter = fogadott_szolo.kg*randomLiter;
-                sleep(randomSleep);
-                printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető", randomLiter, liter);
-                write(pipe_bor[1], &liter, sizeof(float));
-                close(pipe_bor[1]);
-            }
+        if (feldolgozo > 0) // parent
+        {
+            sleep(1);
+            printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
+            pause();
+            close(pipe_szolo[0]); // parent will write
+            close(pipe_bor[1]);   // parent will read
+            write(pipe_szolo[1], &harslevelu, sizeof(struct Szolo));
+            printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", harslevelu.szolofajta, harslevelu.kg);
+            close(pipe_szolo[1]);
+            pause();
+            float liter;
+            read(pipe_bor[0], &liter, sizeof(float));
+            printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből", liter);
+            close(pipe_bor[0]);
+            sleep(5);
+            kill(feldolgozo, SIGKILL);
+            // int status;
+            // wait(&status); A SIMA WAIT A MAIN MENU-T ZÁRJA, VALAMI NEM JÓ A FORKOLÁSNÁL (VAGY AZ A FELDOLGOZÓÉ...)
         }
+        else
+        {
+            // Feldolgozó
+            sleep(10);
+            printf("Feldolgozo folyamat feldolgozo: Feldogozás készen áll, jelzés elküldése.\n");
+            kill(getppid(), SIGTERM);
+            close(pipe_szolo[1]);
+            close(pipe_bor[0]);
+            struct Szolo fogadott_szolo;
+            read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
+            printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
+            close(pipe_szolo[0]);
+            kill(getppid(), SIGTERM);
+            int randomSleep = rand() % 6 + 5;
+            float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
+            float liter = fogadott_szolo.kg * randomLiter;
+            sleep(randomSleep);
+            printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető", randomLiter, liter);
+            write(pipe_bor[1], &liter, sizeof(float));
+            close(pipe_bor[1]);
+            sleep(10);
+        }
+    }
 }
 
 void init(char *arg)
@@ -189,12 +196,22 @@ void uj_szallitmany(char *arg)
     scanf("%d", &mennyiseg);
     while (fgetc(stdin) != '\n')
         ;
-    printf("Szolofajta neve: :\n1.Furmint\n2.Harslevelu\n");
-    char szolofajta[30];
-    scanf("%s", szolofajta);
-    while (fgetc(stdin) != '\n')
-        ;
-    printf("-----------------\nMegadott adatok:\n-Szolotermelo videk: %s\n-Termelo neve: %s\n-Atvett mennyiseg: %d\n-Szolofajta: %s\n-----------------\n", szolotermo_videk_str, nev, mennyiseg, szolofajta);
+    printf("Szolofajta neve: :\n1.Furmint\n2.Harslevelu\n3.Muskotaly");
+    int szolofajta = menu(3);
+    char szolofajta_str[11];
+    switch (szolofajta)
+    {
+    case 1:
+        strcpy(szolofajta_str, "Furmint");
+        break;
+    case 2:
+        strcpy(szolofajta_str, "Harslevelu");
+        break;
+    case 3:
+        strcpy(szolofajta_str, "Muskotaly");
+        break;
+    }
+    printf("-----------------\nMegadott adatok:\n-Szolotermelo videk: %s\n-Termelo neve: %s\n-Atvett mennyiseg: %d\n-Szolofajta: %s\n-----------------\n", szolotermo_videk_str, nev, mennyiseg, szolofajta_str);
     printf("File-ba iras\n");
     char mennyiseg_str[4];
     char max_rec_id_str[6];
@@ -209,7 +226,7 @@ void uj_szallitmany(char *arg)
     write(g, ", ", strlen(", "));
     write(g, mennyiseg_str, strlen(mennyiseg_str));
     write(g, ", ", strlen(", "));
-    write(g, szolofajta, strlen(szolofajta));
+    write(g, szolofajta_str, strlen(szolofajta_str));
     write(g, ", ", strlen(", "));
     write(g, max_rec_id_str, strlen(max_rec_id_str));
     write(g, "\n", strlen("\n"));
@@ -263,24 +280,55 @@ void adatmodositas(char *arg)
     printf("\nA modosítani kívánt rekord: %s, %s, %s, %s, %s\n", eredmeny[id_loc][0], eredmeny[id_loc][1], eredmeny[id_loc][2], eredmeny[id_loc][3], eredmeny[id_loc][4]);
     printf("Kérem adja meg a módosítani kívánt adatot:\n1.Szolotermelo videk\n2.Termelo neve:\n3.Atvett mennyiseg\n4.Szolofajta\n");
     int menupont = menu(4);
-    printf("menupont: %d\n", menupont);
-    printf("Kerem adja meg az erteket: ");
-    scanf("%s", uj_ertek);
     while (fgetc(stdin) != '\n')
         ;
     switch (menupont)
     {
     case 1:
-        eredmeny[id_loc][0] = uj_ertek;
+        printf("Szolotermelo videk neve:\n1.Tokaji\n2.Egri\n3.Balatoni\n");
+        int szolotermelo_videk = menu(3);
+        char szolotermo_videk_str[9];
+        switch (szolotermelo_videk)
+        {
+        case 1:
+            strcpy(szolotermo_videk_str, "Tokaji");
+            break;
+        case 2:
+            strcpy(szolotermo_videk_str, "Egri");
+            break;
+        case 3:
+            strcpy(szolotermo_videk_str, "Balatoni");
+            break;
+        }
+        eredmeny[id_loc][0] = szolotermo_videk_str;
         break;
     case 2:
+        printf("Termelo neve: ");
+        scanf("%s", uj_ertek);
         eredmeny[id_loc][1] = uj_ertek;
         break;
     case 3:
+        printf("Atvett mennyiseg (kg): ");
+        scanf("%s", uj_ertek);
         eredmeny[id_loc][2] = uj_ertek;
         break;
     case 4:
-        eredmeny[id_loc][3] = uj_ertek;
+        printf("Szolofajta neve: :\n1.Furmint\n2.Harslevelu\n3.Muskotaly");
+        int szolofajta = menu(3);
+        char szolofajta_str[11];
+        switch (szolofajta)
+        {
+        case 1:
+            strcpy(szolofajta_str, "Furmint");
+            break;
+        case 2:
+            strcpy(szolofajta_str, "Harslevelu");
+            break;
+        case 3:
+            strcpy(szolofajta_str, "Muskotaly");
+            break;
+        }
+        eredmeny[id_loc][3] = szolofajta_str;
         break;
     }
     printf("\nA módosított rekord: %s, %s, %s, %s, %s\n", eredmeny[id_loc][0], eredmeny[id_loc][1], eredmeny[id_loc][2], eredmeny[id_loc][3], eredmeny[id_loc][4]);
@@ -393,7 +441,7 @@ int id_lokalizalas(char *arg, int id)
 }
 
 int menu(int max_menupont)
-{ 
+{
     printf("\nVálasztása: ");
     int sucess = 0;
     int menupont;
