@@ -83,7 +83,7 @@ void feldolgozo_folyamat(char *arg)
     strcpy(furmint.szolofajta, "Furmint");
     furmint.kg = 0;
     struct Szolo muskotaly;
-    strcpy(furmint.szolofajta, "Muskotaly");
+    strcpy(muskotaly.szolofajta, "Muskotaly");
     muskotaly.kg = 0;
 
     struct Szolo szolo_kuldesre[3];
@@ -123,18 +123,19 @@ void feldolgozo_folyamat(char *arg)
     }
 
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
-    printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n, Muskotaly mennyisege: %i\n", harslevelu.kg, furmint.kg, muskotaly.kg);
+    printf("\n Ha egy szőlőfajtából összegyült %i kg, feldolgozásra elküldjük", idealis_szolomennyiseg);
+    printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i, Muskotaly mennyisege: %i\n", harslevelu.kg, furmint.kg, muskotaly.kg);
     if (size_of_szolo_kuldesre > 0)
-    {                             // PREVENT FORK BOMB
-        signal(SIGTERM, handler); // handler
-        int pipe_szolo[2];        // declaration of pipe
+    {
+        signal(SIGTERM, handler);
+        int pipe_szolo[2];     
         int pipe_bor[2];
-        pid_t feldolgozo; // declaration of child
-        pipe(pipe_szolo); // initialization of pipe
+        pid_t feldolgozo;
+        pipe(pipe_szolo); 
         pipe(pipe_bor);
-        feldolgozo = fork(); // initialization of child
+        feldolgozo = fork();
 
-        if (feldolgozo > 0) // parent
+        if (feldolgozo > 0)
         {
             sleep(1);
             printf("\nFeldolgozo folyamat NSZT: Várakozás a feldolgozóüzemre\n");
@@ -148,15 +149,16 @@ void feldolgozo_folyamat(char *arg)
                 printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", szolo_kuldesre[i].szolofajta, szolo_kuldesre[i].kg);
             }
             close(pipe_szolo[1]);
-            pause();
-            float liter;
-            read(pipe_bor[0], &liter, sizeof(float));
-            printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből", liter);
+            for (int i = 0; i < size_of_szolo_kuldesre; i++)
+            {
+                pause();
+                float liter;
+                read(pipe_bor[0], &liter, sizeof(float));
+                printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből\n", liter);
+            }
             close(pipe_bor[0]);
-            sleep(5);
-            //kill(feldolgozo, SIGKILL);
-            // int status;
-            // wait(&status); A SIMA WAIT A MAIN MENU-T ZÁRJA, VALAMI NEM JÓ A FORKOLÁSNÁL (VAGY AZ A FELDOLGOZÓÉ...)
+            int status;
+            wait(&status);
         }
         else
         {
@@ -171,7 +173,7 @@ void feldolgozo_folyamat(char *arg)
                 struct Szolo fogadott_szolo;
                 read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
                 printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
-                
+
                 kill(getppid(), SIGTERM);
                 int randomSleep = rand() % 6 + 5;
                 float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
@@ -182,6 +184,7 @@ void feldolgozo_folyamat(char *arg)
             }
             close(pipe_szolo[0]);
             close(pipe_bor[1]);
+            kill(getppid(), SIGTERM);
             exit(0);
         }
     }
