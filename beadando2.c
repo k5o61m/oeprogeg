@@ -82,6 +82,13 @@ void feldolgozo_folyamat(char *arg)
     struct Szolo furmint;
     strcpy(furmint.szolofajta, "Furmint");
     furmint.kg = 0;
+    struct Szolo muskotaly;
+    strcpy(furmint.szolofajta, "Muskotaly");
+    muskotaly.kg = 0;
+
+    struct Szolo szolo_kuldesre[3];
+    int size_of_szolo_kuldesre = 0;
+
     int i;
     for (i = 0; i < rec_count; i++)
     {
@@ -93,10 +100,31 @@ void feldolgozo_folyamat(char *arg)
         {
             furmint.kg += atoi(eredmeny[i][2]);
         }
+        if (strcmp(eredmeny[i][3], " Muskotaly") == 0)
+        {
+            muskotaly.kg += atoi(eredmeny[i][2]);
+        }
     }
+
+    if (harslevelu.kg >= idealis_szolomennyiseg)
+    {
+        szolo_kuldesre[size_of_szolo_kuldesre] = harslevelu;
+        size_of_szolo_kuldesre++;
+    }
+    if (furmint.kg >= idealis_szolomennyiseg)
+    {
+        szolo_kuldesre[size_of_szolo_kuldesre] = furmint;
+        size_of_szolo_kuldesre++;
+    }
+    if (muskotaly.kg >= idealis_szolomennyiseg)
+    {
+        szolo_kuldesre[size_of_szolo_kuldesre] = muskotaly;
+        size_of_szolo_kuldesre++;
+    }
+
     printf("\n\n-.-.-.-.-.-.-.-.-.-.-Feldolgozo folyamat-.-.-.-.-.-.-.-.-.-\n");
-    printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n", harslevelu.kg, furmint.kg);
-    if (harslevelu.kg >= idealis_szolomennyiseg || furmint.kg >= idealis_szolomennyiseg)
+    printf("\nHarslevelu mennyisege: %i, Furmint mennyisege: %i\n, Muskotaly mennyisege: %i\n", harslevelu.kg, furmint.kg, muskotaly.kg);
+    if (size_of_szolo_kuldesre > 0)
     {                             // PREVENT FORK BOMB
         signal(SIGTERM, handler); // handler
         int pipe_szolo[2];        // declaration of pipe
@@ -113,8 +141,12 @@ void feldolgozo_folyamat(char *arg)
             pause();
             close(pipe_szolo[0]); // parent will write
             close(pipe_bor[1]);   // parent will read
-            write(pipe_szolo[1], &harslevelu, sizeof(struct Szolo));
-            printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", harslevelu.szolofajta, harslevelu.kg);
+
+            for (int i = 0; i < size_of_szolo_kuldesre; i++)
+            {
+                write(pipe_szolo[1], &szolo_kuldesre[i], sizeof(struct Szolo));
+                printf("\nFeldolgozo folyamat NSZT: %s szolobol elkuldve %i kg\n", szolo_kuldesre[i].szolofajta, szolo_kuldesre[i].kg);
+            }
             close(pipe_szolo[1]);
             pause();
             float liter;
@@ -122,7 +154,7 @@ void feldolgozo_folyamat(char *arg)
             printf("Feldolgozo folyamat NSZT: %f liter bor készül a küldött szőlőből", liter);
             close(pipe_bor[0]);
             sleep(5);
-            kill(feldolgozo, SIGKILL);
+            //kill(feldolgozo, SIGKILL);
             // int status;
             // wait(&status); A SIMA WAIT A MAIN MENU-T ZÁRJA, VALAMI NEM JÓ A FORKOLÁSNÁL (VAGY AZ A FELDOLGOZÓÉ...)
         }
@@ -134,19 +166,23 @@ void feldolgozo_folyamat(char *arg)
             kill(getppid(), SIGTERM);
             close(pipe_szolo[1]);
             close(pipe_bor[0]);
-            struct Szolo fogadott_szolo;
-            read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
-            printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
+            for (int i = 0; i < size_of_szolo_kuldesre; i++)
+            {
+                struct Szolo fogadott_szolo;
+                read(pipe_szolo[0], &fogadott_szolo, sizeof(struct Szolo));
+                printf("\nFeldolgozo folyamat feldolgozo: %s szolobol fogadva %i kg\n", fogadott_szolo.szolofajta, fogadott_szolo.kg);
+                
+                kill(getppid(), SIGTERM);
+                int randomSleep = rand() % 6 + 5;
+                float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
+                float liter = fogadott_szolo.kg * randomLiter;
+                sleep(randomSleep);
+                printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető\n", randomLiter, liter);
+                write(pipe_bor[1], &liter, sizeof(float));
+            }
             close(pipe_szolo[0]);
-            kill(getppid(), SIGTERM);
-            int randomSleep = rand() % 6 + 5;
-            float randomLiter = 0.6 + ((double)rand() / RAND_MAX) * (0.6 - 0.8);
-            float liter = fogadott_szolo.kg * randomLiter;
-            sleep(randomSleep);
-            printf("Feldolgozo folyamat feldolgozo: a borból %f liter / kg, így összesen %f -liter készíthető", randomLiter, liter);
-            write(pipe_bor[1], &liter, sizeof(float));
             close(pipe_bor[1]);
-            sleep(10);
+            exit(0);
         }
     }
 }
