@@ -92,15 +92,15 @@ void feldolgozo_folyamat(char *arg)
     int i;
     for (i = 0; i < rec_count; i++)
     {
-        if (strcmp(eredmeny[i][3], " Harslevelu") == 0) // strip ide mehetne
+        if (strcmp(eredmeny[i][3], "Harslevelu") == 0) // strip ide mehetne
         {
             harslevelu.kg += atoi(eredmeny[i][2]);
         }
-        if (strcmp(eredmeny[i][3], " Furmint") == 0)
+        if (strcmp(eredmeny[i][3], "Furmint") == 0)
         {
             furmint.kg += atoi(eredmeny[i][2]);
         }
-        if (strcmp(eredmeny[i][3], " Muskotaly") == 0)
+        if (strcmp(eredmeny[i][3], "Muskotaly") == 0)
         {
             muskotaly.kg += atoi(eredmeny[i][2]);
         }
@@ -195,10 +195,10 @@ void feldolgozo_folyamat(char *arg)
 
 void init(char *arg)
 {
-    char dummy1[50] = "Tokaji, Bela, 20, Furmint, 1\n";
+    char dummy1[50] = "Tokaji,Bela,20,Furmint,1\n";
     max_rec_id++;
     rec_count++;
-    char dummy2[50] = "Egri, Janos, 100, Harslevelu, 2\n";
+    char dummy2[50] = "Egri,Janos,100,Harslevelu,2\n";
     max_rec_id++;
     rec_count++;
     int g;
@@ -263,13 +263,13 @@ void uj_szallitmany(char *arg)
     int g;
     g = open(arg, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     write(g, szolotermo_videk_str, strlen(szolotermo_videk_str));
-    write(g, ", ", strlen(", "));
+    write(g, ",", strlen(","));
     write(g, nev, strlen(nev));
-    write(g, ", ", strlen(", "));
+    write(g, ",", strlen(","));
     write(g, mennyiseg_str, strlen(mennyiseg_str));
-    write(g, ", ", strlen(", "));
+    write(g, ",", strlen(","));
     write(g, szolofajta_str, strlen(szolofajta_str));
-    write(g, ", ", strlen(", "));
+    write(g, ",", strlen(","));
     write(g, max_rec_id_str, strlen(max_rec_id_str));
     write(g, "\n", strlen("\n"));
     close(g);
@@ -381,13 +381,13 @@ void adatmodositas(char *arg)
     for (i = 0; i < rec_count; i++)
     {
         write(g, eredmeny[i][0], strlen(eredmeny[i][0]));
-        write(g, ", ", strlen(", "));
+        write(g, ",", strlen(","));
         write(g, eredmeny[i][1], strlen(eredmeny[i][1]));
-        write(g, ", ", strlen(", "));
+        write(g, ",", strlen(","));
         write(g, eredmeny[i][2], strlen(eredmeny[i][2]));
-        write(g, ", ", strlen(", "));
+        write(g, ",", strlen(","));
         write(g, eredmeny[i][3], strlen(eredmeny[i][3]));
-        write(g, ", ", strlen(", "));
+        write(g, ",", strlen(","));
         write(g, eredmeny[i][4], strlen(eredmeny[i][4]));
         write(g, "\n", strlen("\n"));
     }
@@ -414,13 +414,13 @@ void adattorles(char *arg)
         if (atoi(eredmeny[i][4]) != id)
         {
             write(g, eredmeny[i][0], strlen(eredmeny[i][0]));
-            write(g, ", ", strlen(", "));
+            write(g, ",", strlen(","));
             write(g, eredmeny[i][1], strlen(eredmeny[i][1]));
-            write(g, ", ", strlen(", "));
+            write(g, ",", strlen(","));
             write(g, eredmeny[i][2], strlen(eredmeny[i][2]));
-            write(g, ", ", strlen(", "));
+            write(g, ",", strlen(","));
             write(g, eredmeny[i][3], strlen(eredmeny[i][3]));
-            write(g, ", ", strlen(", "));
+            write(g, ",", strlen(","));
             write(g, eredmeny[i][4], strlen(eredmeny[i][4]));
             write(g, "\n", strlen("\n"));
         }
